@@ -1,5 +1,4 @@
 *.job
 models/
 __pycache__/
-*.txt
 *.out
