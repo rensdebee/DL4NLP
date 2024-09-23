@@ -1,5 +1,4 @@
 import argparse
-from datasets import load_dataset
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -7,22 +6,18 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
-from utils import compute_metrics, seed, convert_dataset
+from utils import compute_metrics, seed, get_datasets
 import json
-
-def get_datasets(test_domain,test_model):
-    # Filter dataset based on the source
-    ds_test = load_dataset("Hello-SimpleAI/HC3", "finance", split=test_domain)
-    ds_test = convert_dataset(ds_test, test_model)
-    return ds_test
+import os
 
 
 def main(args):
     seed(args.seed)
 
-    test_dataset = get_datasets(
-        args.test_domain,
-        args.test_model,
+    _, _, test_dataset = get_datasets(
+        test_domain=args.test_domain,
+        test_generator=args.test_generator,
+        ratio=0.2,
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -46,16 +41,16 @@ def main(args):
         args.model_name, num_labels=2
     )
 
-    output_dir = f"./models/{args.test_domain}/eval"
+    if not args.out:
+        output_dir = f"./models/eval_{args.test_domain}_{args.test_generator}"
+    else:
+        output_dir = args.out + f"/eval/{args.test_domain}_{args.test_generator}"
+
+    os.makedirs(output_dir, exist_ok=True)
     training_args = TrainingArguments(
         output_dir=output_dir,
         seed=args.seed,
-        per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
-        eval_strategy="steps",
-        eval_steps=1000,
-        save_strategy="steps",
-        save_steps=1000
     )
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
@@ -69,7 +64,7 @@ def main(args):
 
     test_results = trainer.evaluate(test_dataset)
     print(test_results)
-    with open(output_dir+"/test_results.json", "w") as f:
+    with open(output_dir + "/test_results.json", "w") as f:
         json.dump(test_results, f)
 
 
@@ -90,8 +85,8 @@ if __name__ == "__main__":
         default="test_reddit_eli5",
     )
     args.add_argument(
-        "-testm",
-        "--test_model",
+        "-testg",
+        "--test_generator",
         type=str,
         help="Split used for testing",
         default="chatgpt",
@@ -103,5 +98,8 @@ if __name__ == "__main__":
     args.add_argument("--seed", "-s", type=int, default=42, help="random seed.")
     args.add_argument("--max-length", type=int, default=512, help="max_length")
     args.add_argument("--pair", action="store_true", default=False, help="paired input")
+    args.add_argument(
+        "--out", type=str, default=None, help="Path to store trainend model"
+    )
     args = args.parse_args()
     main(args)

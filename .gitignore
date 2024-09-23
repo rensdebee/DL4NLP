@@ -1,4 +1,7 @@
 *.job
-models/
 __pycache__/
 *.out
+models/*
+models/**/*
+!models/**/
+!models/**/eval/**/*.json
