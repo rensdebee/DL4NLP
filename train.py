@@ -1,5 +1,6 @@
 import argparse
-from datasets import load_dataset
+import json
+import os
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -7,32 +8,19 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
-
-from utils import compute_metrics, seed, convert_dataset
-import json
-
-def get_datasets(train_domain, test_domain, train_model, test_model, ratio=0.2):
-    # Filter dataset based on the source
-    ds = load_dataset("Hello-SimpleAI/HC3", "reddit_eli5", split=train_domain)
-    ds = convert_dataset(ds, train_model)
-    ds = ds.train_test_split(test_size=ratio)
-    ds_train = ds["train"]
-    ds_val = ds["test"]
-
-    ds_test = load_dataset("Hello-SimpleAI/HC3", "finance", split=test_domain)
-    ds_test = convert_dataset(ds_test, test_model)
-    return ds_train, ds_val, ds_test
+from utils import compute_metrics, seed, get_datasets
 
 
 def main(args):
     seed(args.seed)
 
     train_dataset, eval_dataset, test_dataset = get_datasets(
-        args.train_domain,
-        args.test_domain,
-        args.train_model,
-        args.test_model,
+        train_domain=args.train_domain,
+        train_generator=args.train_generator,
+        test_domain=args.test_domain,
+        test_generator=args.test_generator,
         ratio=0.2,
+        seed=args.seed,
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -58,7 +46,15 @@ def main(args):
         args.model_name, num_labels=2
     )
 
-    output_dir = f"./models/{args.train_domain}_{args.test_domain}"
+    if not args.out:
+        output_dir = f"./models/train_conf_{args.train_domain}_{args.train_generator}"
+    else:
+        output_dir = args.out
+
+    eval_output_dir = output_dir + f"/eval/{args.test_domain}_{args.test_generator}"
+
+    os.makedirs(eval_output_dir, exist_ok=True)
+
     training_args = TrainingArguments(
         output_dir=output_dir,
         seed=args.seed,
@@ -66,9 +62,9 @@ def main(args):
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
         eval_strategy="steps",
-        eval_steps=1000,
+        eval_steps=200,
         save_strategy="steps",
-        save_steps=1000
+        save_steps=200,
     )
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
@@ -82,11 +78,18 @@ def main(args):
         compute_metrics=compute_metrics,
     )
 
-    trainer.train()
     test_results = trainer.evaluate(test_dataset)
-    print(test_results, "w")
-    with open(output_dir+"/test_results.json") as f:
+    print(test_results)
+    with open(eval_output_dir + "/test_results_beforetraining.json", "w") as f:
         json.dump(test_results, f)
+
+    trainer.train()
+
+    test_results = trainer.evaluate(test_dataset)
+    print(test_results)
+    with open(eval_output_dir + "/test_results.json", "w") as f:
+        json.dump(test_results, f)
+
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser("OOD AI detector trainer")
@@ -102,11 +105,11 @@ if __name__ == "__main__":
         "--train_domain",
         type=str,
         help="Split used for training",
-        default="train_reddit_eli5",
+        default="train",
     )
     args.add_argument(
-        "-trainm",
-        "--train_model",
+        "-traing",
+        "--train_generator",
         type=str,
         help="Split used for training",
         default="chatgpt",
@@ -116,16 +119,16 @@ if __name__ == "__main__":
         "--test_domain",
         type=str,
         help="Split used for testing at the end",
-        default="test_reddit_eli5",
+        default="reddit_test",
     )
     args.add_argument(
-        "-testm",
-        "--test_model",
+        "-testg",
+        "--test_generator",
         type=str,
         help="Split used for testing",
         default="chatgpt",
     )
-    args.add_argument("-b", "--batch-size", type=int, default=16, help="batch size")
+    args.add_argument("-b", "--batch_size", type=int, default=16, help="batch size")
     args.add_argument("-e", "--epochs", type=int, default=2, help="batch size")
     args.add_argument(
         "--cuda", "-c", type=str, default="0", help="gpu ids, like: 1,2,3"
@@ -133,6 +136,9 @@ if __name__ == "__main__":
     args.add_argument("--seed", "-s", type=int, default=42, help="random seed.")
     args.add_argument("--max-length", type=int, default=512, help="max_length")
     args.add_argument("--pair", action="store_true", default=False, help="paired input")
+    args.add_argument(
+        "--out", type=str, default=None, help="Path to store trainend model"
+    )
 
     args = args.parse_args()
     main(args)
