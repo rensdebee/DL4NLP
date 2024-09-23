@@ -1,0 +1,10 @@
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 8
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1760 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1760 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1760 -testd reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt
+
+
+python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 8
+python test.py -m models\train_conf_reddit_train_llama\checkpoint-1760 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama
+python test.py -m models\train_conf_reddit_train_llama\checkpoint-1760 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_llama
+python test.py -m models\train_conf_reddit_train_llama\checkpoint-1760 -testd reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama
