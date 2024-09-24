@@ -17,7 +17,7 @@ def main(args):
     _, _, test_dataset = get_datasets(
         test_domain=args.test_domain,
         test_generator=args.test_generator,
-        ratio=0.2,
+        ratio=0.1,
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
