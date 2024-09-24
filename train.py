@@ -19,7 +19,7 @@ def main(args):
         train_generator=args.train_generator,
         test_domain=args.test_domain,
         test_generator=args.test_generator,
-        ratio=0.2,
+        ratio=0.1,
         seed=args.seed,
     )
 
@@ -46,8 +46,13 @@ def main(args):
         args.model_name, num_labels=2
     )
 
+    if args.head_only:
+        for name, param in model.named_parameters():
+            if not name.startswith("classifier"):
+                param.requires_grad = False
+
     if not args.out:
-        output_dir = f"./models/train_conf_{args.train_domain}_{args.train_generator}"
+        output_dir = f"./models/train_conf_{args.train_domain}_{args.train_generator}_head_only_{args.head_only}"
     else:
         output_dir = args.out
 
@@ -129,13 +134,14 @@ if __name__ == "__main__":
         default="chatgpt",
     )
     args.add_argument("-b", "--batch_size", type=int, default=16, help="batch size")
-    args.add_argument("-e", "--epochs", type=int, default=2, help="batch size")
+    args.add_argument("-e", "--epochs", type=int, default=1, help="Number of epochs")
     args.add_argument(
         "--cuda", "-c", type=str, default="0", help="gpu ids, like: 1,2,3"
     )
     args.add_argument("--seed", "-s", type=int, default=42, help="random seed.")
     args.add_argument("--max-length", type=int, default=512, help="max_length")
     args.add_argument("--pair", action="store_true", default=False, help="paired input")
+    args.add_argument("--head_only", action="store_true", default=False, help="Only train classification head")
     args.add_argument(
         "--out", type=str, default=None, help="Path to store trainend model"
     )

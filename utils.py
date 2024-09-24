@@ -57,9 +57,9 @@ def convert_dataset(dataset, generator):
         q = row["question"]
         human = row["human_answers"]
         model = row[f"{generator}_answers"]
-        for h in human:
+        for h in human[:1]:
             ds.append([q, h, 0])
-        for m in model:
+        for m in model[:1]:
             ds.append([q, m, 1])
 
     ds = Dataset.from_pandas(pd.DataFrame(ds, columns=["question", "answer", "label"]))
