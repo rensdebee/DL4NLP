@@ -5,7 +5,7 @@ from scipy.special import softmax
 import random
 import torch
 import pandas as pd
-from datasets import Dataset, load_dataset
+from datasets import Dataset, load_dataset, concatenate_datasets
 
 
 def seed(seed):
@@ -13,6 +13,16 @@ def seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+
+def filter_dataset(ds, included_sources):
+    "filters correct sources and ensures equal representation"
+
+    datasets = [ds[included] for included in included_sources]
+    counts = [len(d) for d in datasets]
+    min_count = min(counts)
+    datasets = [d.shuffle().select(range(min_count)) for d in datasets]
+
+    return concatenate_datasets(datasets)
 
 
 def get_datasets(
@@ -22,11 +32,20 @@ def get_datasets(
     test_generator=None,
     ratio=0.2,
     seed=None,
+    train_multiple=False
 ):
     dataset_url = "DanteZD/HC3_plus_llama70B"
     # Filter dataset based on the source
+    ["reddit_train", "wiki_csai", "open_qa", "finance", "medicine"]
+
     if train_domain and train_generator:
-        ds = load_dataset(dataset_url, split=train_domain)
+        if not train_multiple:
+            ds = load_dataset(dataset_url, split=train_domain)
+        else:
+            ds = load_dataset(dataset_url)
+            included_sources = train_multiple.split(",")
+            ds = filter_dataset(ds, included_sources)
+            print(ds)
         ds = convert_dataset(ds, train_generator)
         ds = ds.class_encode_column("label")
         ds = ds.train_test_split(test_size=ratio, seed=seed, stratify_by_column="label")

@@ -13,7 +13,6 @@ from utils import compute_metrics, seed, get_datasets
 
 def main(args):
     seed(args.seed)
-
     train_dataset, eval_dataset, test_dataset = get_datasets(
         train_domain=args.train_domain,
         train_generator=args.train_generator,
@@ -21,6 +20,7 @@ def main(args):
         test_generator=args.test_generator,
         ratio=0.1,
         seed=args.seed,
+        train_multiple=args.train_multiple
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -52,7 +52,11 @@ def main(args):
                 param.requires_grad = False
 
     if not args.out:
-        output_dir = f"./models/train_conf_{args.train_domain}_{args.train_generator}_head_only_{args.head_only}"
+        if args.train_multiple:
+            
+            output_dir = f"./models/train_conf_{('_'.join(args.train_multiple.split(',')))}_{args.train_generator}_head_only_{args.head_only}"
+        else:
+            output_dir = f"./models/train_conf_{args.train_domain}_{args.train_generator}_head_only_{args.head_only}"
     else:
         output_dir = args.out
 
@@ -144,6 +148,9 @@ if __name__ == "__main__":
     args.add_argument("--head_only", action="store_true", default=False, help="Only train classification head")
     args.add_argument(
         "--out", type=str, default=None, help="Path to store trainend model"
+    )
+    args.add_argument(
+        "--train_multiple", type=str, default=False, help="Path to store trainend model"
     )
 
     args = args.parse_args()
