@@ -3,6 +3,13 @@ python train.py -traind reddit_train -traing llama -testd reddit_test -testg lla
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 8 --head_only
 python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 8 --head_only
 
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple wiki_csai,open_qa,finance,medicine
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,open_qa,finance,medicine
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,finance,medicine
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,open_qa,,medicine
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,open_qa,finance
+
+
 python test.py -m models\train_conf_reddit_train_chatgpt_head_only_false\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_false
 python test.py -m models\train_conf_reddit_train_chatgpt_head_only_false\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_false
 python test.py -m models\train_conf_reddit_train_chatgpt_head_only_false\checkpoint-1170 -testd reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_false
