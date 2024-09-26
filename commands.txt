@@ -1,8 +1,3 @@
-python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 8
-python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 8
-python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 8 --head_only
-python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 8 --head_only
-
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple wiki_csai,open_qa,finance,medicine
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,open_qa,finance,medicine
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,finance,medicine
@@ -10,18 +5,58 @@ python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg c
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,open_qa,finance
 
 
-python test.py -m models\train_conf_reddit_train_chatgpt_head_only_false\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_false
-python test.py -m models\train_conf_reddit_train_chatgpt_head_only_false\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_false
-python test.py -m models\train_conf_reddit_train_chatgpt_head_only_false\checkpoint-1170 -testd reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_false
+# NO PREPROCESSING
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 8
+python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 8
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 8 --head_only
+python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 8 --head_only
 
-python test.py -m models\train_conf_reddit_train_chatgpt_head_only_true\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_true
-python test.py -m models\train_conf_reddit_train_chatgpt_head_only_true\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_true
-python test.py -m models\train_conf_reddit_train_chatgpt_head_only_true\checkpoint-1170 -testd reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_true
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1170 -testd reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt
 
-python test.py -m models\train_conf_reddit_train_llama_head_only_false\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_head_only_false
-python test.py -m models\train_conf_reddit_train_llama_head_only_false\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_llama_head_only_false
-python test.py -m models\train_conf_reddit_train_llama_head_only_false\checkpoint-1170 -testd reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_head_only_false
+python test.py -m models\train_conf_reddit_train_chatgpt_head_only\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt_head_only
+python test.py -m models\train_conf_reddit_train_chatgpt_head_only\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only
+python test.py -m models\train_conf_reddit_train_chatgpt_head_only\checkpoint-1170 -testd reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only
 
-python test.py -m models\train_conf_reddit_train_llama_head_only_true\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_head_only_true
-python test.py -m models\train_conf_reddit_train_llama_head_only_true\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_llama_head_only_true
-python test.py -m models\train_conf_reddit_train_llama_head_only_true\checkpoint-1170 -testd reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_head_only_true
+python test.py -m models\train_conf_reddit_train_llama\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama
+python test.py -m models\train_conf_reddit_train_llama\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_llama
+python test.py -m models\train_conf_reddit_train_llama\checkpoint-1170 -testd reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama
+
+python test.py -m models\train_conf_reddit_train_llama_head_only\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_head_only
+python test.py -m models\train_conf_reddit_train_llama_head_only\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_llama_head_only
+python test.py -m models\train_conf_reddit_train_llama_head_only\checkpoint-1170 -testd reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_head_only
+
+
+## WITH PREPROCESSING:
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 8 --preprocess
+python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 8 --preprocess
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 8 --head_only --preprocess
+python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 8 --head_only --preprocess
+
+python test.py -m models\train_conf_reddit_train_chatgpt_cleaned\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt_cleaned
+python test.py -m models\train_conf_reddit_train_chatgpt_cleaned\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_cleaned
+python test.py -m models\train_conf_reddit_train_chatgpt_cleaned\checkpoint-1170 -testd reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_cleaned
+
+python test.py -m models\train_conf_reddit_train_chatgpt_head_only_cleaned\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_cleaned
+python test.py -m models\train_conf_reddit_train_chatgpt_head_only_cleaned\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_cleaned
+python test.py -m models\train_conf_reddit_train_chatgpt_head_only_cleaned\checkpoint-1170 -testd reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_chatgpt_head_only_cleaned
+
+python test.py -m models\train_conf_reddit_train_llama_cleaned\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_cleaned
+python test.py -m models\train_conf_reddit_train_llama_cleaned\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_llama_cleaned
+python test.py -m models\train_conf_reddit_train_llama_cleaned\checkpoint-1170 -testd reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_cleaned
+
+python test.py -m models\train_conf_reddit_train_llama_head_only_cleaned\checkpoint-1170 -testd non_reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_head_only_cleaned
+python test.py -m models\train_conf_reddit_train_llama_head_only_cleaned\checkpoint-1170 -testd non_reddit_test -testg llama -b 8 --out models\train_conf_reddit_train_llama_head_only_cleaned
+python test.py -m models\train_conf_reddit_train_llama_head_only_cleaned\checkpoint-1170 -testd reddit_test -testg chatgpt -b 8 --out models\train_conf_reddit_train_llama_head_only_cleaned
+
+## PER CLASS EVAL:
+python test.py -m models\train_conf_reddit_train_llama_cleaned\checkpoint-1170 -testd wiki_csai -testg llama -b 8 --out models\train_conf_reddit_train_llama_cleaned
+python test.py -m models\train_conf_reddit_train_llama_cleaned\checkpoint-1170 -testd open_qa -testg llama -b 8 --out models\train_conf_reddit_train_llama_cleaned
+python test.py -m models\train_conf_reddit_train_llama_cleaned\checkpoint-1170 -testd finance -testg llama -b 8 --out models\train_conf_reddit_train_llama_cleaned
+python test.py -m models\train_conf_reddit_train_llama_cleaned\checkpoint-1170 -testd medicine -testg llama -b 8 --out models\train_conf_reddit_train_llama_cleaned
+
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1170 -testd wiki_csai -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1170 -testd open_qa -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1170 -testd finance -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt
+python test.py -m models\train_conf_reddit_train_chatgpt\checkpoint-1170 -testd medicine -testg chatgpt -b 8 --out models\train_conf_reddit_train_chatgpt

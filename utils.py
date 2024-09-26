@@ -1,3 +1,4 @@
+import re
 import numpy as np
 from collections import Counter
 import evaluate
@@ -6,6 +7,16 @@ import random
 import torch
 import pandas as pd
 from datasets import Dataset, load_dataset, concatenate_datasets
+from sklearn.metrics import roc_auc_score
+
+
+def remove_special_characters(text):
+    """Removes newline, tab, and double quote characters from a string."""
+
+    # Use regular expressions to replace occurrences with empty strings
+    cleaned_text = re.sub(r"[\n\t\"\*#]", "", text)
+
+    return cleaned_text
 
 
 def seed(seed):
@@ -13,6 +24,7 @@ def seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+
 
 def filter_dataset(ds, included_sources):
     "filters correct sources and ensures equal representation"
@@ -32,7 +44,8 @@ def get_datasets(
     test_generator=None,
     ratio=0.2,
     seed=None,
-    train_multiple=False
+    train_multiple=False,
+    preprocess=True,
 ):
     dataset_url = "DanteZD/HC3_plus_llama70B"
     # Filter dataset based on the source
@@ -46,7 +59,7 @@ def get_datasets(
             included_sources = train_multiple.split(",")
             ds = filter_dataset(ds, included_sources)
             print(ds)
-        ds = convert_dataset(ds, train_generator)
+        ds = convert_dataset(ds, train_generator, preprocess=preprocess)
         ds = ds.class_encode_column("label")
         ds = ds.train_test_split(test_size=ratio, seed=seed, stratify_by_column="label")
         print("Train set:")
@@ -61,7 +74,11 @@ def get_datasets(
 
     if test_domain and test_generator:
         ds_test = load_dataset(dataset_url, split=test_domain)
-        ds_test = convert_dataset(ds_test, test_generator)
+        ds_test = convert_dataset(
+            ds_test,
+            test_generator,
+            preprocess=preprocess,
+        )
         print("Test set:")
         print(Counter(ds_test["label"]))
     else:
@@ -70,15 +87,25 @@ def get_datasets(
     return ds_train, ds_val, ds_test
 
 
-def convert_dataset(dataset, generator):
+def convert_dataset(
+    dataset,
+    generator,
+    preprocess=False,
+):
     ds = []
     for row in dataset:
         q = row["question"]
+        if preprocess:
+            q = remove_special_characters(q)
         human = row["human_answers"]
         model = row[f"{generator}_answers"]
         for h in human[:1]:
+            if preprocess:
+                h = remove_special_characters(h)
             ds.append([q, h, 0])
         for m in model[:1]:
+            if preprocess:
+                m = remove_special_characters(m)
             ds.append([q, m, 1])
 
     ds = Dataset.from_pandas(pd.DataFrame(ds, columns=["question", "answer", "label"]))
@@ -111,6 +138,8 @@ def compute_metrics(eval_preds):
         predictions=predictions, references=labels, average=None
     )["f1"].tolist()
     metrics["roc_auc"] = roc_auc.compute(
-        prediction_scores=probs[np.arange(len(labels)), labels], references=labels
+        prediction_scores=probs[:, 1], references=labels
     )["roc_auc"]
+    metrics["sk_roc_auc"] = roc_auc_score(labels, probs[:, 1])
+
     return metrics
