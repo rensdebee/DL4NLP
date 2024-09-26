@@ -20,7 +20,8 @@ def main(args):
         test_generator=args.test_generator,
         ratio=0.1,
         seed=args.seed,
-        train_multiple=args.train_multiple
+        train_multiple=args.train_multiple,
+        preprocess=args.preprocess,
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -53,10 +54,15 @@ def main(args):
 
     if not args.out:
         if args.train_multiple:
-            
-            output_dir = f"./models/train_conf_{('_'.join(args.train_multiple.split(',')))}_{args.train_generator}_head_only_{args.head_only}"
+            output_dir = f"./models/train_conf_{('_'.join(args.train_multiple.split(',')))}_{args.train_generator}"
         else:
-            output_dir = f"./models/train_conf_{args.train_domain}_{args.train_generator}_head_only_{args.head_only}"
+            output_dir = (
+                f"./models/train_conf_{args.train_domain}_{args.train_generator}"
+            )
+        if args.head_only:
+            output_dir += "_head_only"
+        if args.preprocess:
+            output_dir += "_cleaned"
     else:
         output_dir = args.out
 
@@ -145,7 +151,18 @@ if __name__ == "__main__":
     args.add_argument("--seed", "-s", type=int, default=42, help="random seed.")
     args.add_argument("--max-length", type=int, default=512, help="max_length")
     args.add_argument("--pair", action="store_true", default=False, help="paired input")
-    args.add_argument("--head_only", action="store_true", default=False, help="Only train classification head")
+    args.add_argument(
+        "--head_only",
+        action="store_true",
+        default=False,
+        help="Only train classification head",
+    )
+    args.add_argument(
+        "--preprocess",
+        action="store_true",
+        default=False,
+        help="Remove special characters from text",
+    )
     args.add_argument(
         "--out", type=str, default=None, help="Path to store trainend model"
     )
