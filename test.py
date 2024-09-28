@@ -18,6 +18,7 @@ def main(args):
         test_domain=args.test_domain,
         test_generator=args.test_generator,
         ratio=0.1,
+        preprocess=args.preprocess,
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -100,6 +101,12 @@ if __name__ == "__main__":
     args.add_argument("--pair", action="store_true", default=False, help="paired input")
     args.add_argument(
         "--out", type=str, default=None, help="Path to store trainend model"
+    )
+    args.add_argument(
+        "--preprocess",
+        action="store_true",
+        default=False,
+        help="Remove special characters from text",
     )
     args = args.parse_args()
     main(args)
