@@ -9,9 +9,11 @@ from transformers import (
     TrainingArguments,
 )
 from utils import compute_metrics, seed, get_datasets
+import time
 
 
 def main(args):
+    start = time.time()
     seed(args.seed)
     train_dataset, eval_dataset, test_dataset = get_datasets(
         train_domain=args.train_domain,
@@ -53,7 +55,7 @@ def main(args):
 
     if not args.out:
         if args.train_multiple:
-            
+
             output_dir = f"./models/train_conf_{('_'.join(args.train_multiple.split(',')))}_{args.train_generator}_head_only_{args.head_only}"
         else:
             output_dir = f"./models/train_conf_{args.train_domain}_{args.train_generator}_head_only_{args.head_only}"
@@ -98,6 +100,8 @@ def main(args):
     print(test_results)
     with open(eval_output_dir + "/test_results.json", "w") as f:
         json.dump(test_results, f)
+
+    print("Total train time:", time.time()- start)
 
 
 if __name__ == "__main__":
