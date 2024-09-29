@@ -11,21 +11,32 @@ import json
 import os
 
 
-def main(args):
-    seed(args.seed)
+def test(
+    model_name,
+    test_domain="test_reddit_eli5",
+    test_generator="chatgpt",
+    batch_size=16,
+    cuda="0",
+    seed_value=42,
+    max_length=512,
+    pair=False,
+    out=None,
+    preprocess=False,
+):
+    seed(seed_value)
 
     _, _, test_dataset = get_datasets(
-        test_domain=args.test_domain,
-        test_generator=args.test_generator,
+        test_domain=test_domain,
+        test_generator=test_generator,
         ratio=0.1,
-        preprocess=args.preprocess,
+        preprocess=preprocess,
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
-        args.model_name, clean_up_tokenization_spaces=True
+        model_name, clean_up_tokenization_spaces=True
     )
-    kwargs = dict(max_length=args.max_length, truncation=True)
-    if args.pair:
+    kwargs = dict(max_length=max_length, truncation=True)
+    if pair:
 
         def tokenize_fn(example):
             return tokenizer(example["question"], example["answer"], **kwargs)
@@ -39,19 +50,19 @@ def main(args):
     test_dataset = test_dataset.map(tokenize_fn)
 
     model = AutoModelForSequenceClassification.from_pretrained(
-        args.model_name, num_labels=2
+        model_name, num_labels=2
     )
 
-    if not args.out:
-        output_dir = f"./models/eval_{args.test_domain}_{args.test_generator}"
+    if not out:
+        output_dir = f"./models/eval_{test_domain}_{test_generator}"
     else:
-        output_dir = args.out + f"/eval/{args.test_domain}_{args.test_generator}"
+        output_dir = out + f"/eval/{test_domain}_{test_generator}"
 
     os.makedirs(output_dir, exist_ok=True)
     training_args = TrainingArguments(
         output_dir=output_dir,
-        seed=args.seed,
-        per_device_eval_batch_size=args.batch_size,
+        seed=seed_value,
+        per_device_eval_batch_size=batch_size,
     )
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
@@ -65,49 +76,63 @@ def main(args):
 
     test_results = trainer.evaluate(test_dataset)
     print(test_results)
-    print(output_dir)
+    print(output_dir + "/test_results.json")
     with open(output_dir + "/test_results.json", "w") as f:
         json.dump(test_results, f)
 
 
 if __name__ == "__main__":
-    args = argparse.ArgumentParser("OOD AI detector trainer")
-    args.add_argument(
+    parser = argparse.ArgumentParser("OOD AI detector trainer")
+    parser.add_argument(
         "-m",
         "--model-name",
         type=str,
         help="model name",
         default="FacebookAI/roberta-base",
     )
-    args.add_argument(
+    parser.add_argument(
         "-testd",
         "--test_domain",
         type=str,
         help="Split used for testing at the end",
         default="test_reddit_eli5",
     )
-    args.add_argument(
+    parser.add_argument(
         "-testg",
         "--test_generator",
         type=str,
         help="Split used for testing",
         default="chatgpt",
     )
-    args.add_argument("-b", "--batch-size", type=int, default=16, help="batch size")
-    args.add_argument(
+    parser.add_argument("-b", "--batch-size", type=int, default=16, help="batch size")
+    parser.add_argument(
         "--cuda", "-c", type=str, default="0", help="gpu ids, like: 1,2,3"
     )
-    args.add_argument("--seed", "-s", type=int, default=42, help="random seed.")
-    args.add_argument("--max-length", type=int, default=512, help="max_length")
-    args.add_argument("--pair", action="store_true", default=False, help="paired input")
-    args.add_argument(
-        "--out", type=str, default=None, help="Path to store trainend model"
+    parser.add_argument("--seed", "-s", type=int, default=42, help="random seed.")
+    parser.add_argument("--max-length", type=int, default=512, help="max_length")
+    parser.add_argument("--pair", action="store_true", default=False, help="paired input")
+    parser.add_argument(
+        "--out", type=str, default=None, help="Path to store trained model"
     )
-    args.add_argument(
+    parser.add_argument(
         "--preprocess",
         action="store_true",
         default=False,
         help="Remove special characters from text",
     )
-    args = args.parse_args()
-    main(args)
+
+    args = parser.parse_args()
+
+    # Call the test function with individual arguments
+    test(
+        model_name=args.model_name,
+        test_domain=args.test_domain,
+        test_generator=args.test_generator,
+        batch_size=args.batch_size,
+        cuda=args.cuda,
+        seed_value=args.seed,
+        max_length=args.max_length,
+        pair=args.pair,
+        out=args.out,
+        preprocess=args.preprocess,
+    )
