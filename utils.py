@@ -8,6 +8,7 @@ import torch
 import pandas as pd
 from datasets import Dataset, load_dataset, concatenate_datasets
 from sklearn.metrics import roc_auc_score
+import json
 
 
 def remove_special_characters(text):
@@ -143,3 +144,51 @@ def compute_metrics(eval_preds):
     metrics["sk_roc_auc"] = roc_auc_score(labels, probs[:, 1])
 
     return metrics
+
+
+def test_all_domains(model_name="models/train_conf_reddit_train_open_qa_finance_medicine_chatgpt_head_only_False/checkpoint-1516"):
+    from custom_test import test
+    domains = ["reddit_test", "wiki_csai", "open_qa", "finance", "medicine"]
+    for domain in domains:
+        print(model_name)
+        test(model_name,
+             test_domain=domain,
+             test_generator="chatgpt",
+             out=model_name)
+
+
+def colorize(value):
+    RED = "\033[91m"
+    RESET = "\033[0m"
+    try:
+        float_value = float(value)
+        if float_value < 0.8:
+            return f"{RED}{float_value:.4f}{RESET}"
+        return f"{float_value:.4f}"
+    except (ValueError, TypeError):
+        return value
+
+
+def print_results(model_name, test_generator, not_trained_on):
+    domains = ["reddit_test", "wiki_csai", "open_qa", "finance", "medicine"]
+    domains_print = ["reddit_train", "wiki_csai", "open_qa", "finance", "medicine"]
+
+    results = []
+    for domain in domains:
+        with open(f"{model_name}/eval/{domain}_{test_generator}/test_results.json") as f:
+            results.append(json.load(f))
+
+    header = "Domain\t\tAcc\tAUC\tpH\tpAI\trH\trAI\tf1H\tf1AI"
+    print(f"NTO: {not_trained_on}")
+    print(header)
+    print("=" * 78) 
+
+    for domain, result in zip(domains_print, results):
+        accuracy = colorize(result.get('eval_accuracy', 'N/A'))
+        roc_auc = colorize(result.get('eval_roc_auc', 'N/A'))
+        p = [colorize(val) for val in result.get('eval_precision', ['N/A', 'N/A'])]
+        r = [colorize(val) for val in result.get('eval_recall', ['N/A', 'N/A'])]
+        f1 = [colorize(val) for val in result.get('eval_f1', ['N/A', 'N/A'])]
+
+        print(f"{domain:<15}\t{accuracy}\t{roc_auc}\t{p[0]}\t{p[1]}\t{r[0]}\t{r[1]}\t{f1[0]}\t{f1[1]}")
+    print("\n\n")

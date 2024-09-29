@@ -1,8 +1,9 @@
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple wiki_csai,open_qa,finance,medicine
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,open_qa,finance,medicine
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,finance,medicine
-python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,open_qa,,medicine
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,open_qa,medicine
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,open_qa,finance
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,open_qa,finance,medicine
 
 
 # NO PREPROCESSING
