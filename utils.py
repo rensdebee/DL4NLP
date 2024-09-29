@@ -150,7 +150,6 @@ def test_all_domains(model_name="models/train_conf_reddit_train_open_qa_finance_
     from custom_test import test
     domains = ["reddit_test", "wiki_csai", "open_qa", "finance", "medicine"]
     for domain in domains:
-        print(model_name)
         test(model_name,
              test_domain=domain,
              test_generator="chatgpt",
@@ -181,7 +180,7 @@ def print_results(model_name, test_generator, not_trained_on):
     header = "Domain\t\tAcc\tAUC\tpH\tpAI\trH\trAI\tf1H\tf1AI"
     print(f"NTO: {not_trained_on}")
     print(header)
-    print("=" * 78) 
+    print("=" * 78)
 
     for domain, result in zip(domains_print, results):
         accuracy = colorize(result.get('eval_accuracy', 'N/A'))
