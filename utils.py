@@ -146,13 +146,13 @@ def compute_metrics(eval_preds):
     return metrics
 
 
-def test_all_domains(model_name="models/train_conf_reddit_train_open_qa_finance_medicine_chatgpt_head_only_False/checkpoint-1516"):
+def test_all_domains(model_name="models/train_conf_reddit_train_open_qa_finance_medicine_chatgpt_head_only_False/checkpoint-1516", test_generator="chatgpt"):
     from custom_test import test
     domains = ["reddit_test", "wiki_csai", "open_qa", "finance", "medicine"]
     for domain in domains:
         test(model_name,
              test_domain=domain,
-             test_generator="chatgpt",
+             test_generator=test_generator,
              out=model_name)
 
 
