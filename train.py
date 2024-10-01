@@ -7,6 +7,7 @@ from transformers import (
     DataCollatorWithPadding,
     Trainer,
     TrainingArguments,
+    TrainerCallback,
 )
 from utils import compute_metrics, seed, get_datasets
 import time
@@ -86,6 +87,17 @@ def main(args):
     )
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+
+    # Custom callback to capture the step
+    class StepCallback(TrainerCallback):
+        def __init__(self):
+            self.step = 0
+
+        def on_step_end(self, args, state, control, **kwargs):
+            self.step = state.global_step
+
+    step_callback = StepCallback()
+
     trainer = Trainer(
         model,
         training_args,
@@ -93,7 +105,10 @@ def main(args):
         eval_dataset=eval_dataset,
         data_collator=data_collator,
         tokenizer=tokenizer,
-        compute_metrics=compute_metrics,
+        compute_metrics=lambda eval_pred: compute_metrics(
+            eval_pred, step_callback.step, eval_output_dir
+        ),
+        callbacks=[step_callback],
     )
 
     test_results = trainer.evaluate(test_dataset)
@@ -108,7 +123,7 @@ def main(args):
     with open(eval_output_dir + "/test_results.json", "w") as f:
         json.dump(test_results, f)
 
-    print("Total train time:", time.time()- start)
+    print("Total train time:", time.time() - start)
 
 
 if __name__ == "__main__":
