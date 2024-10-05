@@ -5,12 +5,14 @@ from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
     DataCollatorWithPadding,
-    Trainer,
     TrainingArguments,
-    TrainerCallback,
 )
-from utils import compute_metrics, seed, get_datasets
+from utils import compute_metrics, seed, get_datasets, MultiDatasetTrainer, StepCallback
 import time
+import warnings
+
+# Filters out warning of Transformer update that we don't need to worry about
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def main(args):
@@ -21,7 +23,7 @@ def main(args):
         train_generator=args.train_generator,
         test_domain=args.test_domain,
         test_generator=args.test_generator,
-        ratio=0.1,
+        ratio=args.split_ratio,
         seed=args.seed,
         train_multiple=args.train_multiple,
         preprocess=args.preprocess,
@@ -43,8 +45,10 @@ def main(args):
 
     print("Tokenizing and mapping...")
     train_dataset = train_dataset.map(tokenize_fn)
-    eval_dataset = eval_dataset.map(tokenize_fn)
-    test_dataset = test_dataset.map(tokenize_fn)
+    for k, v in eval_dataset.items():
+        eval_dataset[k] = v.map(tokenize_fn)
+    for k, v in test_dataset.items():
+        test_dataset[k] = v.map(tokenize_fn)
 
     model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name, num_labels=2
@@ -70,7 +74,7 @@ def main(args):
     else:
         output_dir = args.out
 
-    eval_output_dir = output_dir + f"/eval/{args.test_domain}_{args.test_generator}"
+    eval_output_dir = output_dir + f"/eval/"
 
     os.makedirs(eval_output_dir, exist_ok=True)
 
@@ -80,48 +84,41 @@ def main(args):
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
-        eval_strategy="steps",
-        eval_steps=200,
+        eval_strategy="no",
+        eval_steps=args.eval_steps,
         save_strategy="steps",
         save_steps=200,
     )
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
-    # Custom callback to capture the step
-    class StepCallback(TrainerCallback):
-        def __init__(self):
-            self.step = 0
+    step_callback = StepCallback(
+        eval_steps=training_args.eval_steps,
+        trainer=None,
+        test_model=args.test_generator,
+        output_dir=output_dir,
+    )
 
-        def on_step_end(self, args, state, control, **kwargs):
-            self.step = state.global_step
-
-    step_callback = StepCallback()
-
-    trainer = Trainer(
+    trainer = MultiDatasetTrainer(
         model,
         training_args,
         train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
+        eval_dataset=None,
         data_collator=data_collator,
         tokenizer=tokenizer,
-        compute_metrics=lambda eval_pred: compute_metrics(
-            eval_pred, step_callback.step, eval_output_dir
-        ),
         callbacks=[step_callback],
     )
 
-    test_results = trainer.evaluate(test_dataset)
+    step_callback.trainer = trainer
+    step_callback.eval_datasets = eval_dataset
+
+    test_results = trainer.evaluate_multiple_datasets(test_dataset, step_callback)
     print(test_results)
-    with open(eval_output_dir + "/test_results_beforetraining.json", "w") as f:
-        json.dump(test_results, f)
 
     trainer.train()
 
-    test_results = trainer.evaluate(test_dataset)
+    test_results = trainer.evaluate_multiple_datasets(test_dataset, step_callback)
     print(test_results)
-    with open(eval_output_dir + "/test_results.json", "w") as f:
-        json.dump(test_results, f)
 
     print("Total train time:", time.time() - start)
 
@@ -188,6 +185,15 @@ if __name__ == "__main__":
     )
     args.add_argument(
         "--train_multiple", type=str, default=False, help="Path to store trainend model"
+    )
+    args.add_argument(
+        "--eval_steps", type=int, default=200, help="Number of steps between evaluation"
+    )
+    args.add_argument(
+        "--split_ratio",
+        type=float,
+        default=0.1,
+        help="Number of steps between evaluation",
     )
 
     args = args.parse_args()
