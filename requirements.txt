@@ -7,3 +7,4 @@ datasets
 evaluate
 scikit-learn
 accelerate
+matplotlib

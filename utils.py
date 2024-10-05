@@ -9,6 +9,8 @@ import pandas as pd
 from datasets import Dataset, load_dataset, concatenate_datasets
 from sklearn.metrics import roc_auc_score
 import json
+from transformers import TrainerCallback, Trainer
+import os
 
 
 def remove_special_characters(text):
@@ -52,6 +54,11 @@ def get_datasets(
     # Filter dataset based on the source
     ["reddit_train", "wiki_csai", "open_qa", "finance", "medicine"]
 
+    if test_domain:
+        test_domain = test_domain.strip().split(",")
+    else:
+        test_domain = []
+
     if train_domain and train_generator:
         if not train_multiple:
             ds = load_dataset(dataset_url, split=train_domain)
@@ -61,27 +68,37 @@ def get_datasets(
             ds = filter_dataset(ds, included_sources)
             print(ds)
         ds = convert_dataset(ds, train_generator, preprocess=preprocess)
-        ds = ds.class_encode_column("label")
         ds = ds.train_test_split(test_size=ratio, seed=seed, stratify_by_column="label")
-        print("Train set:")
+        print(f"Train set {train_domain}:")
         ds_train = ds["train"]
         print(Counter(ds_train["label"]))
-        ds_val = ds["test"]
-        print("Eval set")
-        print(Counter(ds_val["label"]))
+        ds_val = {}
+        ds_val[f"{train_domain}_{train_generator}"] = ds["test"]
+        for k, v in ds_val.items():
+            print(f"Eval set {k}")
+            print(Counter(v["label"]))
+
     else:
         ds_train = None
         ds_val = None
 
-    if test_domain and test_generator:
-        ds_test = load_dataset(dataset_url, split=test_domain)
-        ds_test = convert_dataset(
-            ds_test,
-            test_generator,
-            preprocess=preprocess,
-        )
-        print("Test set:")
-        print(Counter(ds_test["label"]))
+    if len(test_domain) > 0 and test_generator:
+        ds_test = {}
+        for domain in test_domain:
+            ds = load_dataset(dataset_url, split=domain)
+            ds = convert_dataset(ds, test_generator, preprocess=preprocess)
+            name = "Test"
+            if len(test_domain) > 1 and f"{domain}_{test_generator}" not in ds_val:
+                ds_val[f"{domain}_{test_generator}"] = ds
+                name = "Test/Eval"
+            if f"{domain}_{test_generator}" in ds_val:
+                ds_test[f"{domain}_{test_generator}"] = ds_val[
+                    f"{domain}_{test_generator}"
+                ]
+            else:
+                ds_test[f"{domain}_{test_generator}"] = ds
+            print(f"{name} set {domain}_{test_generator}")
+            print(Counter(ds_test[f"{domain}_{test_generator}"]["label"]))
     else:
         ds_test = None
 
@@ -110,11 +127,12 @@ def convert_dataset(
             ds.append([q, m, 1])
 
     ds = Dataset.from_pandas(pd.DataFrame(ds, columns=["question", "answer", "label"]))
+    ds = ds.class_encode_column("label")
 
     return ds
 
 
-def compute_metrics(eval_preds, steps=None, eval_output_dir=None):
+def compute_metrics(eval_preds, steps=None, domain=None, model=None, output_dir=None):
     metrics = {}
     logits, labels = eval_preds
     predictions = np.argmax(logits, axis=-1)
@@ -142,10 +160,10 @@ def compute_metrics(eval_preds, steps=None, eval_output_dir=None):
         prediction_scores=probs[:, 1], references=labels
     )["roc_auc"]
     metrics["sk_roc_auc"] = roc_auc_score(labels, probs[:, 1])
-
-    if steps and eval_output_dir:
-        eval_output_dir = eval_output_dir + f"/step_{steps}.json"
-        with open(eval_output_dir, "w") as f:
+    if steps is not None and output_dir and domain:
+        eval_output_dir = output_dir + f"/eval/{domain}_{model}"
+        os.makedirs(eval_output_dir, exist_ok=True)
+        with open(eval_output_dir + f"/step_{steps}.json", "w") as f:
             json.dump(metrics, f)
 
     return metrics
@@ -206,3 +224,47 @@ def print_results(model_name, test_generator, not_trained_on):
             f"{domain:<15}\t{accuracy}\t{roc_auc}\t{p[0]}\t{p[1]}\t{r[0]}\t{r[1]}\t{f1[0]}\t{f1[1]}"
         )
     print("\n\n")
+
+
+class StepCallback(TrainerCallback):
+    def __init__(self, eval_steps, trainer, test_model, output_dir):
+        self.step = 0
+        self.eval_steps = eval_steps
+        self.trainer = trainer  # Reference to the trainer to call evaluation
+        self.eval_datasets = None  # This will be set in the trainer
+        self.model = test_model
+        self.outpur_dir = output_dir
+
+    def on_step_end(self, args, state, control, **kwargs):
+        self.step = state.global_step
+
+        # Trigger evaluation on multiple datasets every `eval_steps`
+        if self.step % self.eval_steps == 0:
+            print(f"Evaluating at step {self.step}...")
+            self.trainer.evaluate_multiple_datasets(self.eval_datasets, self)
+
+
+class MultiDatasetTrainer(Trainer):
+    def evaluate_multiple_datasets(self, eval_datasets, step_callback):
+        results = {}
+        for domain, dataset in eval_datasets.items():
+            print(f"Eval on {domain} at step {step_callback.step}")
+            # Evaluate on each dataset
+            data_loader = self.get_eval_dataloader(dataset)
+            data_loader.batch_size = self.args.per_device_eval_batch_size
+            output = self.prediction_loop(
+                data_loader,
+                description=f"Evaluation on {domain}",
+                metric_key_prefix=f"{domain}",
+            )
+
+            # Call custom compute_metrics function and pass step + dataset_name
+            metrics = compute_metrics(
+                (output.predictions, output.label_ids),
+                step_callback.step,
+                domain,
+                step_callback.model,
+                step_callback.outpur_dir,
+            )
+            results[domain] = metrics
+        return results
