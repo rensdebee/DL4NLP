@@ -33,13 +33,17 @@ This will create the embedding distribution plot, and topics plot. Note that you
 The experiments can be reproduced by running the following commands:
 
 ### Cross-Domain and Cross-Model Evaluation
+All commands can be found in the 'commands.txt' file under TABLE 2, When all of these are trained, you can go to Evaluation.ipynb to evaluate and print all found results, ensuring that the model paths are set correctly.<br>
+EXAMPLE:
 ```bash
-python RUN RELEVANT SCRIPT + PARAMETERS 
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4
 ```
 
 ### In-depth Cross-Domain Evaluation
+All commands can be found in the 'commands.txt' file under TABLE 3, When all of these are trained, you can go to Evaluation.ipynb to evaluate and print all found results, ensuring that the model paths are set correctly.<br>
+EXAMPLE:
 ```bash
-python RUN RELEVANT SCRIPT + PARAMETERS 
+python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 4 --train_multiple wiki_csai,open_qa,finance,medicine
 ```
 
 ### Data Ablation Study

@@ -1,4 +1,9 @@
-# CROSS DOMAIN IN DEPTH EVALUATION
+# TABLE 2
+python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4
+python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 4
+python train.py -traind reddit_train -traing llama_8B -testd reddit_test -testg llama_8B -b 4
+
+# TABLE 3
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple wiki_csai,open_qa,finance,medicine
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,open_qa,finance,medicine
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4 --train_multiple reddit_train,wiki_csai,finance,medicine
@@ -12,14 +17,6 @@ python train.py -traind reddit_train -traing llama -testd reddit_test -testg lla
 python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 4 --train_multiple reddit_train,wiki_csai,open_qa,medicine
 python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 4 --train_multiple reddit_train,wiki_csai,open_qa,finance
 python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 4 --train_multiple reddit_train,wiki_csai,open_qa,finance,medicine
-
-# FIGURE 1
-python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 4
-python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 4
-python train.py -traind reddit_train -traing llama_8b -testd reddit_test -testg llama_8b -b 4
-
-
-
 
 # NO PREPROCESSING
 python train.py -traind reddit_train -traing chatgpt -testd reddit_test -testg chatgpt -b 8
