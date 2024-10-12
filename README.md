@@ -19,7 +19,15 @@ python ./dataset/create_8B_dataset.py --data_split reddit_eli5 --start_idx 6000 
 ```
 
 ## Performing the linguistic analysis
-TODO Weet niet of je hier nog ff wil laten weten hoe ze het moeten runnen?
+Linguistic analysis can be run with the linguistic_analysis.py file.
+The instruction are given inside the file with examples of the types and names to run.
+The three functions that can be run are: get_vocabulary_features, get_semantics_plot and get_perplexity_plot
+
+The topic extraction can be performed by simply running:
+```bash
+python topic_extraction.py
+```
+This will create the embedding distribution plot, and topics plot. Note that you need a folder named: 'topic_ex'
 
 ## Experiments
 The experiments can be reproduced by running the following commands:
