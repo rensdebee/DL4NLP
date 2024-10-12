@@ -44,7 +44,15 @@ python RUN RELEVANT SCRIPT + PARAMETERS
 
 ### Data Ablation Study
 ```bash
-python RUN RELEVANT SCRIPT + PARAMETERS 
+# REDDIT BASE MODEL TRAINING:
+python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 4 --eval_steps 1000
+# FINE-TUNING:
+# NON REDDIT:
+python train.py -m models\train_conf_reddit_train_llama\checkpoint-2340 -traind non_reddit_test -traing llama -testd non_reddit_test,reddit_test -testg llama -b 4 --eval_steps 1 --split_ratio 0.8
+# WIKI CS/AI
+python train.py -m models\train_conf_reddit_train_llama\checkpoint-2340 -traind wiki_csai -traing llama -testd medicine,reddit_test,wiki_csai -testg llama -b 4 --eval_steps 1 --split_ratio 0.9
+
+
 ```
 
 ### Authors: *H.C. van den Bos, R. den Braber, A.J. van Breda, D. Zegveld*
