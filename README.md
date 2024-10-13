@@ -47,6 +47,7 @@ python train.py -traind reddit_train -traing llama -testd reddit_test -testg lla
 ```
 
 ### Data Ablation Study
+Use data_ablation.ipynb for generating the results
 ```bash
 # REDDIT BASE MODEL TRAINING:
 python train.py -traind reddit_train -traing llama -testd reddit_test -testg llama -b 4 --eval_steps 1000
